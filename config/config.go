@@ -20,10 +20,11 @@ type AppConfig struct {
 	} `mapstructure:"app"`
 
 	HTTP struct {
-		Engine       string `mapstructure:"engine"`
-		EnableSwagger bool  `mapstructure:"enable_swagger"`
-		DebugMode    bool   `mapstructure:"debug_mode"`
-		APIKey       string `mapstructure:"api_key"`
+		Engine        string `mapstructure:"engine"`
+		EnableSwagger bool   `mapstructure:"enable_swagger"`
+		DebugMode     bool   `mapstructure:"debug_mode"`
+		APIKey        string `mapstructure:"api_key"`
+		SwaggerHost   string `mapstructure:"swagger_host"`
 	} `mapstructure:"http"`
 
 	Log struct {
