@@ -1,0 +1,52 @@
+app:
+  name: zora-mcp-server
+  env: development
+  http_port: 8081
+
+http:
+  engine: echo
+  enable_swagger: true
+  debug_mode: true
+  api_key: ""  # Set to protect management endpoints; empty = no auth
+
+log:
+  level: debug
+  format: JSON
+  write_to_file: false
+  file_path: ""
+
+db:
+  driver: gorm
+  dialect: postgres
+  dsn: "postgres://zora:zora@localhost:5432/zora?sslmode=disable"
+  max_open_conns: 25
+  max_idle_conns: 5
+  conn_max_lifetime: 5m
+  debug_mode: false
+
+redis:
+  address: "localhost:6379"
+  password: ""
+  db: 1
+  pool_size: 10
+  debug_mode: false
+
+minio:
+  endpoint: "localhost:9000"
+  access_key: "minioadmin"
+  secret_key: "minioadmin"
+  use_ssl: false
+  region: "us-east-1"
+  scripts_bucket: "zora"
+
+embedding:
+  base_url: "http://localhost:11434"
+  model: "nomic-embed-text"
+
+llm:
+  base_url: "http://localhost:11434/v1"
+  model: "qwen3:14b"
+  api_key: ""
+
+graceful:
+  shutdown_timeout: 10s

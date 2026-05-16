@@ -1,0 +1,1 @@
+ALTER TABLE zora_tools_registry ALTER COLUMN embedding TYPE VECTOR(1536);

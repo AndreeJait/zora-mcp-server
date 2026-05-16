@@ -1,0 +1,1 @@
+ALTER TABLE zora_tools_registry ADD COLUMN env JSONB NOT NULL DEFAULT '{}';

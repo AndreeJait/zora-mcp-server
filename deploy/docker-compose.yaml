@@ -1,0 +1,92 @@
+services:
+  zora-mcp-server:
+    image: ghcr.io/andreejait/zora-mcp-server:latest
+    container_name: zora-mcp-server
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    environment:
+      - APP_ENV=production
+      - APP_HTTP_PORT=8080
+      # Database
+      - DB_DSN=postgres://zora:zora_secret@postgres:5432/zora_mcp?sslmode=disable
+      # Redis
+      - REDIS_ADDRESS=redis:6379
+      # MinIO
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioadmin}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-minioadmin}
+      # Embedding
+      - EMBEDDING_BASE_URL=http://ollama:11434
+      - EMBEDDING_MODEL=nomic-embed-text
+      # LLM
+      - LLM_BASE_URL=http://ollama:11434/v1
+      - LLM_MODEL=qwen3:14b
+      - LLM_API_KEY=${OLLAMA_API_KEY}
+      # API Key for protected endpoints
+      - HTTP_API_KEY=${MCP_API_KEY}
+    volumes:
+      - ../files/config/app.yaml:/app/files/config/app.yaml:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: zora-mcp-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=zora
+      - POSTGRES_PASSWORD=zora_secret
+      - POSTGRES_DB=zora_mcp
+    ports:
+      - "5433:5432"
+    volumes:
+      - mcp_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zora -d zora_mcp"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: zora-mcp-redis
+    restart: unless-stopped
+    ports:
+      - "6381:6379"
+    volumes:
+      - mcp_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    container_name: zora-mcp-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ACCESS_KEY:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY:-minioadmin}
+    ports:
+      - "9002:9000"
+      - "9003:9001"
+    volumes:
+      - mcp_minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mcp_postgres_data:
+  mcp_redis_data:
+  mcp_minio_data:
