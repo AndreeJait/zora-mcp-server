@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/AndreeJait/zora-mcp-server/config"
@@ -31,6 +32,16 @@ func NewOllamaProvider(cfg *config.AppConfig) portOutbound.LLMProvider {
 			Timeout: 120 * time.Second,
 		},
 	}
+}
+
+// resolveBaseURL returns the Ollama API base URL for the given model.
+// Cloud models (containing "-cloud") use the Ollama cloud endpoint with API key auth.
+// Local models use the configured base URL.
+func (p *ollamaProvider) resolveBaseURL(model string) string {
+	if strings.Contains(model, "-cloud") {
+		return "https://ollama.com"
+	}
+	return p.baseURL
 }
 
 type chatRequest struct {
@@ -69,7 +80,12 @@ func (p *ollamaProvider) Generate(ctx context.Context, systemPrompt string, user
 		return "", fmt.Errorf("marshal chat request: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, p.baseURL+"/chat/completions", bytes.NewReader(body))
+	baseURL := p.resolveBaseURL(p.model)
+	path := "/chat/completions"
+	if strings.Contains(p.model, "-cloud") {
+		path = "/api/chat"
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, baseURL+path, bytes.NewReader(body))
 	if err != nil {
 		return "", fmt.Errorf("create chat request: %w", err)
 	}
